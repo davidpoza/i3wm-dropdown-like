@@ -20,11 +20,25 @@ fi
 prevResWsp=`cat ~/.prevResWsp`
 
 
+
 # We are IN RESERVED SCREEN with dropdown OPEN -> close dropdown = Recover prevResWsp
 if [[ $currScr == $DROPDOWN_SCREEN && $currWsp == $DROPDOWN_WORKSPACE ]]; then
   # re-focus previous workspace in reserved screen
   i3Command="i3-msg \"workspace $prevResWsp\""
   eval $i3Command
+
+  ###### FUNCTION
+    prevScr=`cat ~/.prevScr`
+    prevWsp=`cat ~/.prevWsp`
+
+    # focus last current screen again
+    i3Command="i3-msg \"focus output $prevScr\""
+    eval $i3Command
+
+    # re-focus last workspace in current screeen
+    i3Command="i3-msg \"workspace $prevWsp\""
+    eval $i3Command
+  #########
 
   #####
   echo $prevResWsp > ~/.resWsp
@@ -55,9 +69,18 @@ elif [[ $currScr != $DROPDOWN_SCREEN && $currWsp != $DROPDOWN_WORKSPACE && $resW
   i3Command="i3-msg \"workspace $prevResWsp\""
   eval $i3Command
 
-  # focus last current screen again
-  i3Command="i3-msg \"focus output $currScr\""
-  eval $i3Command
+  ###### FUNCTION
+    prevScr=`cat ~/.prevScr`
+    prevWsp=`cat ~/.prevWsp`
+
+    # focus last current screen again
+    i3Command="i3-msg \"focus output $prevScr\""
+    eval $i3Command
+
+    # re-focus last workspace in current screeen
+    i3Command="i3-msg \"workspace $prevWsp\""
+    eval $i3Command
+  #########
 
   #####
   echo $prevResWsp > ~/.resWsp
@@ -66,10 +89,10 @@ elif [[ $currScr != $DROPDOWN_SCREEN && $currWsp != $DROPDOWN_WORKSPACE && $resW
 # We ARE NOT IN RESERVED SCREEN and dropdown is CLOSED -> open dropdown
 elif [[ $currScr != $DROPDOWN_SCREEN && $currWsp != $DROPDOWN_WORKSPACE && $resWsp != $DROPDOWN_WORKSPACE ]]; then
   # Apuntamos el monitor actual (salida tipo "HDMI-1-1")
-  #echo $currScr > ~/.currScr
+  echo $currScr > ~/.prevScr
 
   # Apuntamos el workspace actual (salida tipo "9", dependiendo del label que tenga el workspace)
-  #echo $currWsp > ~/.currWsp
+  echo $currWsp > ~/.prevWsp
 
   # movemos el foco al monitor reservado
   i3Command="i3-msg \"focus output $DROPDOWN_SCREEN\""
