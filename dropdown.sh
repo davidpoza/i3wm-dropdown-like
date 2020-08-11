@@ -4,24 +4,34 @@ DROPDOWN_SCREEN='HDMI-1-1' # Screen reserved for dropdown. Use xrandr to figure 
 DROPDOWN_WORKSPACE='dropdown' # Name of dropdown workspace
 
 setWorkspace () {
-  echo $1
-  local i3Command="i3-msg \"workspace $1\""
-  eval $i3Command
+  local command="i3-msg \"workspace $@\""
+  eval $command
 }
 
 setOutput () {
-  local i3Command="i3-msg \"focus output $1\""
-  eval $i3Command
+  local command="i3-msg \"focus output $1\""
+  eval $command
 }
 
 currentWorkspace() {
-  local currWsp=$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused==true).name')
-  echo "$currWsp"
+  local workspace=$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused==true).name')
+  echo "$workspace"
 }
 
 currentScreen() {
-  local currScr=$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused==true).output')
-  echo "$currScr"
+  local screen=$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused==true).output')
+  echo "$screen"
+}
+
+recoverLastWorkspace() {
+  local prevScr=`cat ~/.prevScr`
+  local prevWsp=`cat ~/.prevWsp`
+
+  # focus last current screen again
+  setOutput $prevScr
+
+  # re-focus last workspace in current screeen
+  setWorkspace $prevWsp
 }
 
 # current screen (focused screen)
@@ -45,19 +55,9 @@ prevResWsp=`cat ~/.prevResWsp`
 # We are IN RESERVED SCREEN with dropdown OPEN -> close dropdown = Recover prevResWsp
 if [[ $currScr == $DROPDOWN_SCREEN && $currWsp == $DROPDOWN_WORKSPACE ]]; then
   # re-focus previous workspace in reserved screen
-  i3Command="i3-msg \"workspace $prevResWsp\""
-  eval $i3Command
+  setWorkspace $prevResWsp
 
-  ###### FUNCTION
-    prevScr=`cat ~/.prevScr`
-    prevWsp=`cat ~/.prevWsp`
-
-    # focus last current screen again
-    setOutput $prevScr
-
-    # re-focus last workspace in current screeen
-    setWorkspace \"$prevWsp\"
-  #########
+  recoverLastWorkspace
 
   #####
   echo $prevResWsp > ~/.resWsp
@@ -70,7 +70,7 @@ elif [[ $currScr == $DROPDOWN_SCREEN && $currWsp != $DROPDOWN_WORKSPACE ]]; then
   echo $currWsp > ~/.prevResWsp
 
   # mostramos el workspace reservado
-  setWorkspace \"$DROPDOWN_WORKSPACE\"
+  setWorkspace $DROPDOWN_WORKSPACE
 
   # actualizamos el workspace en reserved screen
   echo $DROPDOWN_WORKSPACE > ~/.resWsp
@@ -83,18 +83,9 @@ elif [[ $currScr != $DROPDOWN_SCREEN && $currWsp != $DROPDOWN_WORKSPACE && $resW
   setOutput $DROPDOWN_SCREEN
 
   # re-focus previous workspace in reserved screen
-  setWorkspace \"$prevResWsp\"
+  setWorkspace $prevResWsp
 
-  ###### FUNCTION
-    prevScr=`cat ~/.prevScr`
-    prevWsp=`cat ~/.prevWsp`
-
-    # focus last current screen again
-    setOutput $prevScr
-
-    # re-focus last workspace in current screeen
-    setWorkspace \"$prevWsp\"
-  #########
+  recoverLastWorkspace
 
   #####
   echo $prevResWsp > ~/.resWsp
@@ -118,7 +109,7 @@ elif [[ $currScr != $DROPDOWN_SCREEN && $currWsp != $DROPDOWN_WORKSPACE && $resW
   echo $currWsp > ~/.prevResWsp
 
   # mostramos el workspace que hemos reservado para el efecto
-  setWorkspace \"$DROPDOWN_WORKSPACE\"
+  setWorkspace $DROPDOWN_WORKSPACE
 
   echo $DROPDOWN_WORKSPACE > ~/.resWsp
 
