@@ -3,11 +3,32 @@
 DROPDOWN_SCREEN='HDMI-1-1' # Screen reserved for dropdown. Use xrandr to figure out the name of your screens
 DROPDOWN_WORKSPACE='dropdown' # Name of dropdown workspace
 
+setWorkspace () {
+  echo $1
+  local i3Command="i3-msg \"workspace $1\""
+  eval $i3Command
+}
+
+setOutput () {
+  local i3Command="i3-msg \"focus output $1\""
+  eval $i3Command
+}
+
+currentWorkspace() {
+  local currWsp=$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused==true).name')
+  echo "$currWsp"
+}
+
+currentScreen() {
+  local currScr=$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused==true).output')
+  echo "$currScr"
+}
+
 # current screen (focused screen)
-currScr=$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused==true).output')
+currScr=$(currentScreen)
 
 # current Workspace in focused screen
-currWsp=$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused==true).name')
+currWsp=$(currentWorkspace)
 
 # resWsp: current workspace in reserved screen
 resWsp=`cat ~/.resWsp`
@@ -32,12 +53,10 @@ if [[ $currScr == $DROPDOWN_SCREEN && $currWsp == $DROPDOWN_WORKSPACE ]]; then
     prevWsp=`cat ~/.prevWsp`
 
     # focus last current screen again
-    i3Command="i3-msg \"focus output $prevScr\""
-    eval $i3Command
+    setOutput $prevScr
 
     # re-focus last workspace in current screeen
-    i3Command="i3-msg \"workspace $prevWsp\""
-    eval $i3Command
+    setWorkspace \"$prevWsp\"
   #########
 
   #####
@@ -51,8 +70,7 @@ elif [[ $currScr == $DROPDOWN_SCREEN && $currWsp != $DROPDOWN_WORKSPACE ]]; then
   echo $currWsp > ~/.prevResWsp
 
   # mostramos el workspace reservado
-  i3Command="i3-msg \"workspace $DROPDOWN_WORKSPACE\""
-  eval $i3Command
+  setWorkspace \"$DROPDOWN_WORKSPACE\"
 
   # actualizamos el workspace en reserved screen
   echo $DROPDOWN_WORKSPACE > ~/.resWsp
@@ -62,24 +80,20 @@ elif [[ $currScr != $DROPDOWN_SCREEN && $currWsp != $DROPDOWN_WORKSPACE && $resW
   # hide dropdown and return to current screen
 
   # focus reserved screens
-  i3Command="i3-msg \"focus output $DROPDOWN_SCREEN\""
-  eval $i3Command
+  setOutput $DROPDOWN_SCREEN
 
   # re-focus previous workspace in reserved screen
-  i3Command="i3-msg \"workspace $prevResWsp\""
-  eval $i3Command
+  setWorkspace \"$prevResWsp\"
 
   ###### FUNCTION
     prevScr=`cat ~/.prevScr`
     prevWsp=`cat ~/.prevWsp`
 
     # focus last current screen again
-    i3Command="i3-msg \"focus output $prevScr\""
-    eval $i3Command
+    setOutput $prevScr
 
     # re-focus last workspace in current screeen
-    i3Command="i3-msg \"workspace $prevWsp\""
-    eval $i3Command
+    setWorkspace \"$prevWsp\"
   #########
 
   #####
@@ -95,18 +109,16 @@ elif [[ $currScr != $DROPDOWN_SCREEN && $currWsp != $DROPDOWN_WORKSPACE && $resW
   echo $currWsp > ~/.prevWsp
 
   # movemos el foco al monitor reservado
-  i3Command="i3-msg \"focus output $DROPDOWN_SCREEN\""
-  eval $i3Command
+  setOutput $DROPDOWN_SCREEN
 
   # current Workspace in focused screen
-  currWsp=$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused==true).name')
+  currWsp=$(currentWorkspace)
 
   # guardamos el workspace que tenia el monitor reservado pero antes apuntamos el valor anterior en prevResWsp
   echo $currWsp > ~/.prevResWsp
 
   # mostramos el workspace que hemos reservado para el efecto
-  i3Command="i3-msg \"workspace $DROPDOWN_WORKSPACE\""
-  eval $i3Command
+  setWorkspace \"$DROPDOWN_WORKSPACE\"
 
   echo $DROPDOWN_WORKSPACE > ~/.resWsp
 
